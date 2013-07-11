@@ -1,8 +1,11 @@
 %% Objective function for lsqcurvefit modeling T1 recovery.
 % Copyright (c) The University of Texas MD Anderson Cancer Center, 2013
 % Authors: David Fuentes, Florian Maier
-function [ modelVector, modelJacobian ] = objectiveFunctionT1( solutionParameters, inversionTimes )
-
+function [ modelVector, modelJacobian ] = objectiveFunctionT1( solutionParameters, inversionANDtr)
+    % Seperate TR value from the inversion time
+    TR = inversionANDtr(end);
+    inversionTimes = inversionANDtr(1:end-1,:);
+    
     %% Initialize.
     % Get number of inversion times, parameters, and pixels.
     numberOfInversionTimes = size(inversionTimes,1);
@@ -22,7 +25,7 @@ function [ modelVector, modelJacobian ] = objectiveFunctionT1( solutionParameter
         
         for inversionIndex = 1:numberOfInversionTimes
             
-            modelVector(pixelIndex,inversionIndex) = amplitudes(pixelIndex) * abs(1 - 2 * exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex)));
+            modelVector(pixelIndex,inversionIndex) = amplitudes(pixelIndex) * abs(1 - 2 * exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex)) + exp(-TR / t1Times(pixelIndex)));
         
         end
         
@@ -45,13 +48,13 @@ function [ modelVector, modelJacobian ] = objectiveFunctionT1( solutionParameter
                 parameterIndex = 1;
                 jacobianRowIndices(i)   = (inversionIndex-1)*numberOfPixels + pixelIndex;
                 jacobianColIndices(i)   = (pixelIndex-1)*numberOfParameters + parameterIndex;
-                jacobianEntries(i)      = abs(1 - 2*exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex)));
+                jacobianEntries(i)      = abs(1 - 2*exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex)) + exp(-TR / t1Times(pixelIndex)));
                 
                 % Parameter 2: T1
                 parameterIndex = 2;
                 jacobianRowIndices(i+1) = (inversionIndex-1)*numberOfPixels + pixelIndex;
                 jacobianColIndices(i+1) = (pixelIndex-1)*numberOfParameters + parameterIndex;
-                jacobianEntries(i+1)    = sign(1 - 2*exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex))) * amplitudes(pixelIndex) * -2 * exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex)) * (inversionTimes(inversionIndex) / t1Times(pixelIndex)^2);
+                jacobianEntries(i+1)    = amplitudes(pixelIndex)*(-2*exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex)) + exp(- TR / t1Times(pixelIndex)) + 1)*((TR*exp(- TR / t1Times(pixelIndex))/t1Times(pixelIndex)^2) - (2*inversionTimes(inversionIndex)*exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex))/t1Times(pixelIndex)^2))/abs(1 - 2 * exp(-inversionTimes(inversionIndex) / t1Times(pixelIndex)) + exp(-TR / t1Times(pixelIndex)));
                 
                 % Update Jacobian indices index.
                 i = i + 2;

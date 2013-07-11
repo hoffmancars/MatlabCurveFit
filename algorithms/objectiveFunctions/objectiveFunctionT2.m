@@ -12,6 +12,7 @@ function [ modelVector, modelJacobian ] = objectiveFunctionT2( solutionParameter
     % Get each model parameter set.
     amplitudes = solutionParameters(1,:);
     t2Times    = solutionParameters(2,:);
+    noise      = solutionParameters(3,:);
 
     %% Evaluate objective function.
     % Initalize vector.
@@ -22,7 +23,7 @@ function [ modelVector, modelJacobian ] = objectiveFunctionT2( solutionParameter
         
         for echoIndex = 1:numberOfEchos
             
-            modelVector(pixelIndex,echoIndex) = amplitudes(pixelIndex) * exp(-echoTimes(echoIndex) / t2Times(pixelIndex));
+            modelVector(pixelIndex,echoIndex) = amplitudes(pixelIndex) * exp(-echoTimes(echoIndex) / t2Times(pixelIndex)) + noise(pixelIndex);
         
         end
         
@@ -53,8 +54,14 @@ function [ modelVector, modelJacobian ] = objectiveFunctionT2( solutionParameter
                 jacobianColIndices(i+1) = (pixelIndex-1)*numberOfParameters + parameterIndex;
                 jacobianEntries(i+1)    = amplitudes(pixelIndex) * exp(-echoTimes(echoIndex) / t2Times(pixelIndex)) * (echoTimes(echoIndex) / t2Times(pixelIndex)^2);
 
+                % Parameter 3: Noise
+                parameterIndex = 3;
+                jacobianRowIndices(i+2) = (echoIndex-1)*numberOfPixels + pixelIndex;
+                jacobianColIndices(i+2) = (pixelIndex-1)*numberOfParameters + parameterIndex;
+                jacobianEntries(i+2)    = 1;
+                
                 % Update Jacobian indices index.
-                i = i + 2;
+                i = i + 3;
 
             end
             

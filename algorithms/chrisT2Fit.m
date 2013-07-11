@@ -22,6 +22,6 @@ function solution = chrisT2Fit(xdata, ydata)
     end
 
     % Reshape solution to format of ydata.
-    solution = reshape(solution, [2, dataSize(1), dataSize(2)]);
+    solution = reshape(solution, [3, dataSize(1), dataSize(2)]);
 
 end
