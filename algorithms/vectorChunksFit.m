@@ -3,6 +3,9 @@
 % Authors: David Fuentes, Florian Maier
 function solution = vectorChunksFit(xdata, ydata, objectiveFunction, solution, bounds)
 
+    % Find number of parameters from solution
+    numPAR = size(solution,1);
+    
     % Set options for fit.
     options = optimset('display', 'off', 'jacobian', 'on', 'TolFun', 1e-5);
     
@@ -15,12 +18,15 @@ function solution = vectorChunksFit(xdata, ydata, objectiveFunction, solution, b
     ydata = reshape(ydata, [numberOfPixels, numberOfSamples]);
 
     % Bounds.
-    lowerBounds = ones(2, numberOfPixels);
-    lowerBounds(1,:) = bounds(1,1) * lowerBounds(1,:);
-    lowerBounds(2,:) = bounds(2,1) * lowerBounds(2,:);
-    upperBounds = ones(2, numberOfPixels);
-    upperBounds(1,:) = bounds(1,2) * upperBounds(1,:);
-    upperBounds(2,:) = bounds(2,2) * upperBounds(2,:);
+   
+    lowerBounds = ones(numPAR, numberOfPixels);
+    upperBounds = ones(numPAR, numberOfPixels);
+    
+    for ii = 1:numPAR
+    lowerBounds(ii,:) = bounds(ii,1) * lowerBounds(ii,:);
+    upperBounds(ii,:) = bounds(ii,2) * upperBounds(ii,:);
+    end
+    
     
     % Get number of threads.
     numberOfThreads = matlabpool('size');
@@ -58,6 +64,6 @@ function solution = vectorChunksFit(xdata, ydata, objectiveFunction, solution, b
     end
 
     % Reshape solution to format of ydata.
-    solution = reshape(solution, [3, dataSize(1), dataSize(2)]);
+    solution = reshape(solution, [numPAR, dataSize(1), dataSize(2)]);
     
 end

@@ -3,6 +3,10 @@
 % Authors: Chris MacLellan, Florian Maier
 function solution = chrisT1Fit(xdata, ydata, solution)
 
+    % Seperate TR value from TI values in xdata
+    TR = xdata(end);
+    xdata = xdata(1:end-1,:);
+    
     % Get size of data.
     dataSize = size(ydata);
     numberOfPixels  = dataSize(1)*dataSize(2);
@@ -11,7 +15,7 @@ function solution = chrisT1Fit(xdata, ydata, solution)
     % Reshape.
     ydata = reshape(ydata, [numberOfPixels, numberOfSamples]);
 
-    t1sig=@(beta,xx) beta(1)*abs((1-2*exp(-xx/beta(2))));
+    t1sig=@(beta,xx) beta(1)*abs(1-2*exp(-xx/beta(2)) + exp(-TR / beta(2)));
     
     % Loop over pixels.
     parfor i = 1:numberOfPixels

@@ -9,8 +9,6 @@ addpath('tools/');
 addpath('algorithms/');
 addpath('algorithms/objectiveFunctions/');
 
-
-
 %Loop for Multiple Noise Values
 folder = dir('/home/hoffman/github/MATLAB/projects/inSilicoPhantoms/relaxation/images/T2images');
 y = numel(folder);
@@ -24,6 +22,7 @@ data = load(file);
 ydata = double(data.im(:,:,:));
 xdata = data.TE;
 
+%add quick square mask could be improved
 mask = (zeros(size(ydata)));
 mask(51:206,51:206,:) = 1;
 ydata = ydata.*mask;
@@ -37,7 +36,6 @@ end
 dataSize = size(ydata);
 numberOfPixels = dataSize(1)*dataSize(2);
 initialGuess = ones(3, numberOfPixels);
-initialGuess = initialGuess*2500;
 
 % Define bounds.
 bounds = [ 0, 4096; 0, 2500; 0, 4096 ];
@@ -48,9 +46,9 @@ solutionPixel = pixelFit(xdata, ydata, @objectiveFunctionT2, initialGuess, bound
 processingTimePixel = toc();
 
 % Vector curve fit.
-%tic();
-%solutionVector = vectorFit(xdata, ydata, @objectiveFunctionT2, initialGuess, bounds);
-%processingTimeVector = toc();
+tic();
+solutionVector = vectorFit(xdata, ydata, @objectiveFunctionT2, initialGuess, bounds);
+processingTimeVector = toc();
 
 % Vector chunks curve fit.
 tic();
@@ -74,7 +72,7 @@ snapnow;
 
 fprintf('Processing times:\n');
 fprintf('   pixel-by-pixel, parfor:                    % 7.2f s\n', processingTimePixel);
-%fprintf('   vector, simultaneous fit:                  % 7.2f s\n', processingTimeVector);
+fprintf('   vector, simultaneous fit:                  % 7.2f s\n', processingTimeVector);
 fprintf('   vector chunks, piecewise simultaneous fit: % 7.2f s\n', processingTimeVectorChunks);
 %fprintf('   Chris'' way:                                % 7.2f s\n', processingTimeChris);
 
@@ -97,23 +95,23 @@ valid = ((~isnan(amplitudes)) & (~isnan(t2times)) & (amplitudes > 0) & (t2times 
 error = rmse( ydata(valid), amplitudes(valid) .* exp( -echoTimes(valid) ./ t2times(valid)) );
 fprintf('RMSE = %.3f\n', error);
 
-%figure;
-%imagesc(squeeze(solutionVector(2,:,:)));
-%title('T_2 map (vector, simultaneous fit)');
-%colormap jet;
-%xlabel('x / px');
-%ylabel('y / px');
-%caxis([0 100]);
-%h = colorbar;
-%set(get(h,'ylabel'),'String', 'T2 / ms');
-%snapnow;
+figure;
+imagesc(squeeze(solutionVector(2,:,:)));
+title('T_2 map (vector, simultaneous fit)');
+colormap jet;
+xlabel('x / px');
+ylabel('y / px');
+caxis([0 100]);
+h = colorbar;
+set(get(h,'ylabel'),'String', 'T2 / ms');
+snapnow;
 
-%amplitudes = repmat( reshape( solutionVector(1,:,:), [size(ydata,1) size(ydata,2) 1]), [1 1 size(xdata,1)]);
-%t2times    = repmat( reshape( solutionVector(2,:,:), [size(ydata,1) size(ydata,2) 1]), [1 1 size(xdata,1)]);
+amplitudes = repmat( reshape( solutionVector(1,:,:), [size(ydata,1) size(ydata,2) 1]), [1 1 size(xdata,1)]);
+t2times    = repmat( reshape( solutionVector(2,:,:), [size(ydata,1) size(ydata,2) 1]), [1 1 size(xdata,1)]);
 
-%valid = ((~isnan(amplitudes)) & (~isnan(t2times)) & (amplitudes > 0) & (t2times > 0));
-%error = rmse( ydata(valid), amplitudes(valid) .* exp( -echoTimes(valid) ./ t2times(valid)) );
-%fprintf('RMSE = %.3f\n', error);
+valid = ((~isnan(amplitudes)) & (~isnan(t2times)) & (amplitudes > 0) & (t2times > 0));
+error = rmse( ydata(valid), amplitudes(valid) .* exp( -echoTimes(valid) ./ t2times(valid)) );
+fprintf('RMSE = %.3f\n', error);
 
 figure;
 imagesc(squeeze(solutionVectorChunks(2,:,:)));
@@ -152,8 +150,8 @@ fprintf('RMSE = %.3f\n', error);
 %fprintf('RMSE = %.3f\n', error);
 
 % Plot results.
-plotDecay( 51, 51, xdata, ydata, solutionPixel, solutionVectorChunks); % Liver
-plotDecay(  51, 151, xdata, ydata, solutionPixel, solutionVectorChunks); % Fat
-plotDecay( 151, 51, xdata, ydata, solutionPixel, solutionVectorChunks); % Aorta
-plotDecay( 151, 151, xdata, ydata, solutionPixel, solutionVectorChunks); % Bone
+plotDecay( 51, 51, xdata, ydata, solutionPixel, solutionVector, solutionVectorChunks); % Liver
+plotDecay(  51, 151, xdata, ydata, solutionPixel, solutionVector, solutionVectorChunks); % Fat
+plotDecay( 151, 51, xdata, ydata, solutionPixel, solutionVector, solutionVectorChunks); % Aorta
+plotDecay( 151, 151, xdata, ydata, solutionPixel, solutionVector, solutionVectorChunks); % Bone
 end
